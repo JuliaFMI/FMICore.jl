@@ -1069,21 +1069,352 @@ mutable struct fmi3ModelDescriptionScheduledExecution
     end
 end
 
-""" 
-ToDo: Not implemented
+"""
+Source: FMISpec3.0.2: 2.4.3. Physical Units
+
+    fmi3BaseUnit(; kg, m, s, A, K, mol, cd, rad, factor, offset)
+
+The optional element `BaseUnit` of an `fmi3Unit`: the exponents of the SI base units (`kg`, `m`, `s`, `A`, `K`, `mol`, `cd`) and the radian (`rad`), and `factor` and `offset` of the conversion to the base units.
+Attributes that are `nothing` are not defined (the default is `0`, `1` for `factor`).
+"""
+mutable struct fmi3BaseUnit
+    # exponents of the SI base units
+    kg::Union{Int32,Nothing} # kilogram
+    m::Union{Int32,Nothing} # meter
+    s::Union{Int32,Nothing} # second
+    A::Union{Int32,Nothing} # ampere
+    K::Union{Int32,Nothing} # kelvin
+    mol::Union{Int32,Nothing} # mole
+    cd::Union{Int32,Nothing} # candela
+    rad::Union{Int32,Nothing} # radian
+
+    factor::Union{Float64,Nothing}
+    offset::Union{Float64,Nothing}
+
+    function fmi3BaseUnit(;
+        kg = nothing,
+        m = nothing,
+        s = nothing,
+        A = nothing,
+        K = nothing,
+        mol = nothing,
+        cd = nothing,
+        rad = nothing,
+        factor = nothing,
+        offset = nothing,
+    )
+        return new(kg, m, s, A, K, mol, cd, rad, factor, offset)
+    end
+end
+export fmi3BaseUnit
+
+"""
+Source: FMISpec3.0.2: 2.4.3. Physical Units
+
+    fmi3DisplayUnit(name; factor, offset, inverse)
+
+The optional elements `DisplayUnit` of an `fmi3Unit`.
+Attributes that are `nothing` are not defined (the default is `1` for `factor`, `0` for `offset` and `false` for `inverse`).
+"""
+mutable struct fmi3DisplayUnit
+    # mandatory
+    name::String
+
+    # optional
+    factor::Union{Float64,Nothing}
+    offset::Union{Float64,Nothing}
+    inverse::Union{Bool,Nothing}
+
+    function fmi3DisplayUnit(
+        name::String;
+        factor = nothing,
+        offset = nothing,
+        inverse = nothing,
+    )
+        return new(name, factor, offset, inverse)
+    end
+end
+export fmi3DisplayUnit
+
+"""
+Source: FMISpec3.0.2: 2.4.3. Physical Units
+
+    fmi3Unit(name, baseUnit = nothing, displayUnits = fmi3DisplayUnit[])
+
+The elements `Unit` of the element `UnitDefinitions` of an FMU.
 """
 mutable struct fmi3Unit
-    # ToDo 
+    # mandatory
+    name::String
+
+    # optional
+    baseUnit::Union{fmi3BaseUnit,Nothing}
+    displayUnits::Vector{fmi3DisplayUnit}
+
+    function fmi3Unit(
+        name::String,
+        baseUnit::Union{fmi3BaseUnit,Nothing} = nothing,
+        displayUnits::Vector{fmi3DisplayUnit} = fmi3DisplayUnit[],
+    )
+        return new(name, baseUnit, displayUnits)
+    end
 end
 export fmi3Unit
 
-""" 
-ToDo: Not implemented
 """
-mutable struct fmi3SimpleType
-    # ToDo 
-end
+Source: FMISpec3.0.2: 2.4.4. Variable Types
+
+The type definitions (element `TypeDefinitions`) of an FMU, one subtype per element, e.g. `fmi3Float64Type` for `Float64Type`.
+The fields are the attributes of the element, attributes that are `nothing` are not defined.
+"""
+abstract type fmi3SimpleType end
 export fmi3SimpleType
+
+"""
+Source: FMISpec3.0.2: 2.4.4. Variable Types
+
+    fmi3FloatType{T}(name)
+
+The type definitions `Float32Type` and `Float64Type` (`fmi3Float32Type` and `fmi3Float64Type`).
+"""
+mutable struct fmi3FloatType{T<:Union{fmi3Float32,fmi3Float64}} <: fmi3SimpleType
+    # mandatory
+    name::String
+
+    # optional
+    description::Union{String,Nothing}
+    quantity::Union{String,Nothing}
+    unit::Union{String,Nothing}
+    displayUnit::Union{String,Nothing}
+    relativeQuantity::Union{Bool,Nothing}
+    unbounded::Union{Bool,Nothing}
+    min::Union{T,Nothing}
+    max::Union{T,Nothing}
+    nominal::Union{T,Nothing}
+
+    function fmi3FloatType{T}(name::String) where {T}
+        return new{T}(
+            name,
+            nothing,
+            nothing,
+            nothing,
+            nothing,
+            nothing,
+            nothing,
+            nothing,
+            nothing,
+            nothing,
+        )
+    end
+end
+const fmi3Float32Type = fmi3FloatType{fmi3Float32}
+const fmi3Float64Type = fmi3FloatType{fmi3Float64}
+export fmi3FloatType, fmi3Float32Type, fmi3Float64Type
+
+"""
+Source: FMISpec3.0.2: 2.4.4. Variable Types
+
+    fmi3IntegerType{T}(name)
+
+The type definitions `Int8Type` to `UInt64Type` (`fmi3Int8Type` to `fmi3UInt64Type`).
+"""
+mutable struct fmi3IntegerType{
+    T<:Union{
+        fmi3Int8,
+        fmi3UInt8,
+        fmi3Int16,
+        fmi3UInt16,
+        fmi3Int32,
+        fmi3UInt32,
+        fmi3Int64,
+        fmi3UInt64,
+    },
+} <: fmi3SimpleType
+    # mandatory
+    name::String
+
+    # optional
+    description::Union{String,Nothing}
+    quantity::Union{String,Nothing}
+    min::Union{T,Nothing}
+    max::Union{T,Nothing}
+
+    function fmi3IntegerType{T}(name::String) where {T}
+        return new{T}(name, nothing, nothing, nothing, nothing)
+    end
+end
+const fmi3Int8Type = fmi3IntegerType{fmi3Int8}
+const fmi3UInt8Type = fmi3IntegerType{fmi3UInt8}
+const fmi3Int16Type = fmi3IntegerType{fmi3Int16}
+const fmi3UInt16Type = fmi3IntegerType{fmi3UInt16}
+const fmi3Int32Type = fmi3IntegerType{fmi3Int32}
+const fmi3UInt32Type = fmi3IntegerType{fmi3UInt32}
+const fmi3Int64Type = fmi3IntegerType{fmi3Int64}
+const fmi3UInt64Type = fmi3IntegerType{fmi3UInt64}
+export fmi3IntegerType,
+    fmi3Int8Type,
+    fmi3UInt8Type,
+    fmi3Int16Type,
+    fmi3UInt16Type,
+    fmi3Int32Type,
+    fmi3UInt32Type,
+    fmi3Int64Type,
+    fmi3UInt64Type
+
+"""
+Source: FMISpec3.0.2: 2.4.4. Variable Types
+
+    fmi3BooleanType(name)
+
+The type definition `BooleanType`.
+"""
+mutable struct fmi3BooleanType <: fmi3SimpleType
+    # mandatory
+    name::String
+
+    # optional
+    description::Union{String,Nothing}
+
+    function fmi3BooleanType(name::String)
+        return new(name, nothing)
+    end
+end
+export fmi3BooleanType
+
+"""
+Source: FMISpec3.0.2: 2.4.4. Variable Types
+
+    fmi3StringType(name)
+
+The type definition `StringType`.
+"""
+mutable struct fmi3StringType <: fmi3SimpleType
+    # mandatory
+    name::String
+
+    # optional
+    description::Union{String,Nothing}
+
+    function fmi3StringType(name::String)
+        return new(name, nothing)
+    end
+end
+export fmi3StringType
+
+"""
+Source: FMISpec3.0.2: 2.4.4. Variable Types
+
+    fmi3BinaryType(name)
+
+The type definition `BinaryType`.
+"""
+mutable struct fmi3BinaryType <: fmi3SimpleType
+    # mandatory
+    name::String
+
+    # optional
+    description::Union{String,Nothing}
+    mimeType::Union{String,Nothing}
+    maxSize::Union{UInt64,Nothing}
+
+    function fmi3BinaryType(name::String)
+        return new(name, nothing, nothing, nothing)
+    end
+end
+export fmi3BinaryType
+
+"""
+Source: FMISpec3.0.2: 2.4.4. Variable Types
+
+    fmi3EnumerationItem(name, value, description = nothing)
+
+The elements `Item` of an `fmi3EnumerationType`.
+"""
+mutable struct fmi3EnumerationItem
+    # mandatory
+    name::String
+    value::fmi3Int64
+
+    # optional
+    description::Union{String,Nothing}
+
+    function fmi3EnumerationItem(
+        name::String,
+        value::Integer,
+        description::Union{String,Nothing} = nothing,
+    )
+        return new(name, value, description)
+    end
+end
+export fmi3EnumerationItem
+
+"""
+Source: FMISpec3.0.2: 2.4.4. Variable Types
+
+    fmi3EnumerationType(name, items = fmi3EnumerationItem[])
+
+The type definition `EnumerationType`.
+"""
+mutable struct fmi3EnumerationType <: fmi3SimpleType
+    # mandatory
+    name::String
+    items::Vector{fmi3EnumerationItem}
+
+    # optional
+    description::Union{String,Nothing}
+    quantity::Union{String,Nothing}
+    min::Union{fmi3Int64,Nothing}
+    max::Union{fmi3Int64,Nothing}
+
+    function fmi3EnumerationType(
+        name::String,
+        items::Vector{fmi3EnumerationItem} = fmi3EnumerationItem[],
+    )
+        return new(name, items, nothing, nothing, nothing, nothing)
+    end
+end
+export fmi3EnumerationType
+
+"""
+Source: FMISpec3.0.2: 2.4.4. Variable Types
+
+    fmi3ClockType(name, intervalVariability)
+
+The type definition `ClockType`, `intervalVariability` is one of `constant`, `fixed`, `tunable`, `changing`, `countdown` or `triggered`.
+"""
+mutable struct fmi3ClockType <: fmi3SimpleType
+    # mandatory
+    name::String
+    intervalVariability::String
+
+    # optional
+    description::Union{String,Nothing}
+    canBeDeactivated::Union{Bool,Nothing}
+    priority::Union{UInt32,Nothing}
+    intervalDecimal::Union{Float64,Nothing}
+    shiftDecimal::Union{Float64,Nothing}
+    supportsFraction::Union{Bool,Nothing}
+    resolution::Union{UInt64,Nothing}
+    intervalCounter::Union{UInt64,Nothing}
+    shiftCounter::Union{UInt64,Nothing}
+
+    function fmi3ClockType(name::String, intervalVariability::String)
+        return new(
+            name,
+            intervalVariability,
+            nothing,
+            nothing,
+            nothing,
+            nothing,
+            nothing,
+            nothing,
+            nothing,
+            nothing,
+            nothing,
+        )
+    end
+end
+export fmi3ClockType
 
 """
 Source: FMISpec3.0, Version D5ef1c1: 2.4.1. Definition of an FMU
@@ -1152,6 +1483,9 @@ mutable struct fmi3ModelDescription <: fmiModelDescription
 
         inst.defaultExperiment = nothing
         inst.clockType = nothing
+
+        inst.unitDefinitions = fmi3Unit[]
+        inst.typeDefinitions = fmi3SimpleType[]
 
         inst.modelVariables = Array{fmi3Variable,1}()
         inst.modelStructure = fmi3ModelDescriptionModelStructure()

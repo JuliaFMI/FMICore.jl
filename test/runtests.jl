@@ -31,6 +31,7 @@ include("utils.jl")
         include("FMI2/cfunc.jl")
     end
     @testset "FMI3" begin
+        include("FMI3/ctype.jl")
         include("FMI3/cfunc.jl")
     end
 end
