@@ -4,7 +4,7 @@
 #
 
 # The FMI 2 logger is a variadic C function, so it is taken from the (pinned) callback library of FMIImport.jl.
-const CALLBACK_LIBRARY_URL = "https://github.com/ThummeTo/FMIImport.jl/raw/v1.4.0/src/FMI2/callbackFunctions/binaries"
+const CALLBACK_LIBRARY_URL = "https://github.com/JuliaFMI/FMIImport.jl/raw/v1.4.0/src/FMI2/callbackFunctions/binaries"
 
 # downloads the callback library, `nothing` if not available for this platform
 function getCallbackLibrary()
